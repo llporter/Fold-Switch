@@ -1,0 +1,51 @@
+How to run the IFU code:
+
+Example:
+./fold_switch_cooperativity_pdb.py 2OUGC.comp DSSP_072617.pik.xz
+
+Outputs a .comp file in your directory of choice (please open fold_switch_cooperativity_pdb.py to change input and output directories, and update preprocessor directive with the location of your installed python2.7).
+
+*When running the code, make sure that 2oug.pdb is in the pdbPath directory you enter in your version of fold_switch_cooperativity_pdb.py
+
+*NOTE: All .comp filenames should be in the format XXXXY.comp, where XXXX is the uppercase 4-digit PDB code of a file and Y is the chain name.  If not chain name, _ can be used.  Additionally, corresponding .pdb files should be saved in pdbPath with the format xxxx.pdb, where xxxx is the lowercase 4-digit PDB identifier of your protein of interest.
+
+Necessary packages and files:
+
+*Python2.7
+*numpy
+*Biopython
+*LINUS (downloadable from Github) #Molecular calculation code from the Roselab 
+*BIOMOL (downloadable from Github) #Code for reading and writing PDBs 
+*frag_mvalu.py #Critical for m-value calculations
+*verify_log3s_coop.py #Critical for m-value calculations
+*coil_lib_v3.py #Critical for m-value calculations
+*DSSP_072617.pik.xz (first decompress with xz; this file is a zipped 		                version of all sequences and DSSP secondary                
+                      structure annotations from the PDB as of 
+                      7/26/17; used by code to align sequences)
+
+
+Useful packages and files:
+*parse_sequence_and_ss.py (useful for making your own pik libraries).  Input file format:
+>PDB AA Sequence info
+PDB SEQUENCE, 50 characters to a line
+>PDB Secondary Structure Info
+PDB SECONDARY STRUCTURE ANNOTATIONS, 50 characters to a line
+>PDB AA Sequence info2
+PDB SEQUENCE, 50 characters to a line
+>PDB Secondary Structure Info2
+PDB SECONDARY STRUCTURE ANNOTATIONS, 50 characters to a line
+É
+*compare_ss.py (makes .comp files for IFU code by comparing a secondary structure annotations of a given PDB from a given secondary structure server [we used SPIDER2] with secondary structure annotations of the same PDB from DSSP [using decompressed DSSP_072617.pik.xz])
+
+Annotations from SS Pred Server should be as follows:
+>PDB AA Sequence info
+PDB SEQUENCE, 50 characters to a line
+>PDB Secondary Structure Info
+PDB SECONDARY STRUCTURE ANNOTATIONS, 50 characters to a line
+*To find your own secondary structure discrepancies, we recommend downloading a secondary structure prediction server that can be installed locally.  SPIDER2 can be found here:
+
+http://sparks-lab.org/index.php/Main/Downloads
+
+
+
+
