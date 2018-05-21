@@ -18,8 +18,8 @@
 using namespace std;
 const bool FALSE = 0;
 const bool TRUE = 1;
-const float minHammDiff = 0.4;
-const int   minGraftSize = 10;
+const float minHammDiff = 0.5;
+const int   minGraftSize = 12;
 float minHammDist = minGraftSize * minHammDiff;
 int numMutationsAllowed;
 
