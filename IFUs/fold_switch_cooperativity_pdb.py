@@ -4,14 +4,20 @@ import sys, cPickle, string
 from frag_mvalu import *
 from verify_log3s_coop import *
 
-pdbPath = ''
-pdbExtension = '.pdb'
-PDBDIR = '/groups/looger/loogerlab/DSSP/PDBs/'
-FILEDIR2 = '/groups/looger/home/porterl/m_value_calculations/fs_100417/'
-#FILEDIR3 = '/groups/looger/home/porterl/m_value_calculations/fs_100417/results/'
-FILEDIR3 = '/groups/looger/home/porterl/m_value_calculations/fs_110917/'
-FSDIR =  '/groups/looger/loogerlab/Lauren/fold_switch_survey/'
+###Change Variables below to match locations on your workstation.
+###Also make sure to change the python path above to match where your version of python is installed.
+###NOTE: THIS SOFTWARE RUNS ON PYTHON 2.7; other versions of python will give errors.
 
+#Location of PDB from which Independent Folding Units will be calculated
+pdbPath = ''
+#Extension of PDB File
+pdbExtension = '.pdb'
+#If you have a directory that contains the whole PDB, insert here
+PDBDIR = '/groups/looger/loogerlab/DSSP/PDBs/'
+#Where you want your output files to be saved
+FILEDIR3 = '/groups/looger/home/porterl/m_value_calculations/fs_110917/'
+
+#Minimum Qualifying Ratio (QR) for a fold switch.  0.78 was the value used in Porter ahd Looger, PNAS 2018.
 MIN_RAT = 0.78
 
 aa3to1 = {'ALA':'A','CYS':'C','ASP':'D','GLU':'E','PHE':'F','GLY':'G','HIS':'H',\
@@ -64,8 +70,6 @@ def reconstruct_string(SS_strings,space_ends,SS):
             else:
                 s += ' '*(space_ends[i+1]-l)
 
-    #print s
-    #print SS
 
 def ss_boundaries(SS):
 
@@ -98,11 +102,6 @@ def ss2pos(SS_strings,ss):
     cpos = []
     good_ss = []
 
-    #print ss
-
-    #print SS_strings
-
-    
     while not finished:
         while i < len(ss):
 
@@ -149,19 +148,7 @@ def smart_map(ss):
 
 def getfSeqLoc(seq,fSeq):
     
-    alignment = pairwise2.align.localxs(fSeq,seq,-5000,-1000)
-
-    #print 'Seq: ',seq
-    #print 'Fseq: ', fSeq
-    #print alignment[0]
-
-    #print 'Test, ',seq
-
-    #print 'Test2, ',fSeq
-
-    #print alignment
-
-    #if len(seq) < len(fSeq) and alignment[0][1][0] == '-':
+    alignment = pairwise2.align.localxs(fSeq,seq,-5000,-1000)#
 
     if alignment[0][1][0] == '-':
         
@@ -179,9 +166,6 @@ def getfSeqLoc(seq,fSeq):
         return [alignment[0][3]-o,alignment[0][4]-o]
             
         
-    #if alignment[0][1][alignment[0][4]] == '-':
-     #   print 'Here'
-      #  return [alignment[0][3],alignment[0][4]-1]
     return [alignment[0][3],alignment[0][4]]
 
 def ss_boundariesC(SS_mapN):
@@ -220,8 +204,6 @@ def get_segment_Mvals(pdbID,segment,pdbin):
 
     cosolvents = ['Urea']
 
-    #print pdbin
-
     resi_dict = get_resi_breaks(pdbin)
     
     ACE = []
@@ -238,7 +220,7 @@ def get_segment_Mvals(pdbID,segment,pdbin):
             ACE.append(atm[:17]+'ACE '+atm[21:])
 
     NME = []
-    #ct_offset=1
+
     if segment[1] >= len(resi_dict.keys()):
         segment[1] = len(resi_dict.keys())-1
     if resi_dict[segment[1]] == len(pdbin):
@@ -255,9 +237,6 @@ def get_segment_Mvals(pdbID,segment,pdbin):
             
     segpdb =ACE+pdbin[resi_dict[segment[0]]:resi_dict[segment[1]]]+NME
 
-    #print segpdb
-
-    #sys.exit()
     
     segmentMvalues = get_total_mvalues(segpdb,cosolvents,[1,1])
         
@@ -270,17 +249,15 @@ def printMvalInfo(cosolvents,segmentMvalues,pdbMvalues):
                 segSum = sum(segmentMvalues.mvalues[c])
                 situSum= sum(pdbMvalues.mvalues[c])
                 print segSum, situSum
-                #sys.exit()
+
                 BBDiff = -sum(pdbMvalues.folded_BB_ASAs)+\
                              sum(segmentMvalues.folded_BB_ASAs)
                 SCDiff = -sum(pdbMvalues.folded_SC_ASAs)+\
                              sum(segmentMvalues.folded_SC_ASAs)
 
-                #print BBDiff, SCDiff
+
                 mval_ratio = segSum/situSum
-                # print 'Resis%6s -%5s %10s m-value: %10.4f %10.4f %10.4f'\
-                    #%(opts['-s'],opts['-e'],c,segSum,situSum,mval_ratio)
-                #print '%10.4f %10.4f %10.4f' %(BBDiff,SCDiff,BBDiff/(BBDiff+SCDiff))
+
                 bbsegMvals = sum(segmentMvalues.bbmvals[c])
                 scsegMvals = sum(segmentMvalues.scmvals[c])
                 bbpdbMvals = sum(pdbMvalues.bbmvals[c])
@@ -289,12 +266,6 @@ def printMvalInfo(cosolvents,segmentMvalues,pdbMvalues):
                 for i in xrange(len(segmentMvalues.bbmvals[c])):
                     print segmentMvalues.bbmvals[c][i], pdbMvalues.bbmvals[c][i], segmentMvalues.scmvals[c][i], pdbMvalues.scmvals[c][i]
 
-                #print '%10.4f %10.4f %10.4f' %(bbsegMvals,scsegMvals,
-                 #                              fabs(bbsegMvals)/(fabs(bbsegMvals)+fabs(scsegMvals)))
-                #print '%10.4f %10.4f %10.4f' %(bbpdbMvals,scpdbMvals,
-                 #                              fabs(bbpdbMvals)/(fabs(bbpdbMvals)+fabs(scpdbMvals)))
-                #print '%10.4f %10.4f' %(bbsegMvals/bbpdbMvals,
-                 #                       scsegMvals/scpdbMvals)
 
                 print sum(pdbMvalues.folded_BB_ASAs),sum(segmentMvalues.folded_BB_ASAs), sum(pdbMvalues.folded_SC_ASAs), sum(segmentMvalues.folded_SC_ASAs)
                 print ((bbsegMvals+scsegMvals)/(bbpdbMvals+scpdbMvals))
@@ -340,7 +311,7 @@ def closestn(lst,n):
 
         if i >0 and n-lst[i] <0:
             break
-    #print 'Test ',minidx, lst[minidx]
+
     return lst[minidx]
 
 def closestc(lst,n):
@@ -387,34 +358,13 @@ def expand_secondary_structure(pdbID,segment,pdbin,pdbMvalues,SS_mapN,SS_mapC,nr
         cterm = closestc(ssPos,maxSeqLocs[1])
         print ssPos, cterm
 
-    #print maxSeqLocs
-    #print 'Expand test'
-    #print segment
-    #print [posDict[nterm], posDict[cterm]]
     print sequence[nterm:cterm]
     print molSeq[rnumDict[nterm]:rnumDict[cterm]]
 
-    #sys.exit()
-        
-
-    #if posDict.has_key(maxSeqLocs[0]) and posDict.has_key(maxSeqLocs[1]):
-
-    #if not posDict.has_key(nterm):
-     #   posDict[nterm] = 0
-     #   for i in xrange(len(ssPos)):
-     #       posDict[ssPos[i]] += 1
-
-     #   ssPos = [nterm]+ssPos
-
-    #print ssPos
-
-    #sys.exit()
 
     iran = range(max(0,posDict[nterm]-3),posDict[nterm]+1)
     jran = range(posDict[cterm],min(len(ssPos),posDict[cterm]+4))
 
-    #print iran
-    #print jran
 
     leni = len(iran)
     lenj = len(jran)
@@ -427,35 +377,16 @@ def expand_secondary_structure(pdbID,segment,pdbin,pdbMvalues,SS_mapN,SS_mapC,nr
             if ssPos[i] > ssPos[j]:
                 continue
         
-            #segment = [ssPos[i],ssPos[j]]
             segment = [rnumDict[ssPos[i]],rnumDict[ssPos[j]]]
 
-            #if segment[1]-segment[0] > flen*2:
-                #continue
-
-            #print segment
-
-            #sys.exit()
-
-            #seq = sequence[segment2[0]:segment2[1]]
-
-            #segment = getfSeqLoc(molSeq,seq)
-
-            #print segment2, segment
-
-            #continue
 
             segmentMvalues = get_segment_Mvals(pdbID,segment,pdbin)
-
-            #pdbMvalues = get_total_mvalues(pdbin,cosolvents,[segment[0],nres-segment[1]])
 
             r = calculate_ratio(cosolvents,segmentMvalues,pdbMvalues,[segment[0],min(nres,segment[1]+1)])
 
             ratios.append(r)
 
     print ratios
-
-    #sys.exit()
 
     maxi = -999
     maxj = -999
@@ -465,11 +396,6 @@ def expand_secondary_structure(pdbID,segment,pdbin,pdbMvalues,SS_mapN,SS_mapC,nr
 
     good_ranges = []
             
-    #for k in xrange(len(ratios)):
-        #if ratios[k] > maxr:
-            #maxr = ratios[k]
-            #maxk = k
-
     for k in xrange(len(ratios)):
         if ratios[k] >= 0.7:
             good_ranges.append([ratios[k],rnumDict[ssPos[iran[k/lenj]]], rnumDict[ssPos[jran[k%lenj]]]])
@@ -479,22 +405,10 @@ def expand_secondary_structure(pdbID,segment,pdbin,pdbMvalues,SS_mapN,SS_mapC,nr
     else:
         return[[-999,-999,-999]]
 
-    #print maxk, maxr, ssPos[iran[maxk/leni]], ssPos[jran[maxk%lenj]]
-    
-    #if maxr >= 0.8:
-     #   g maxr, ssPos[iran[maxk/lenj]], ssPos[jran[maxk%lenj]]
-        #return maxr, ssPos[0], ssPos[jran[maxk%lenj]]
-
-    #elif maxr >= 0.8:
-        #return maxr, -999, -999
-
-    #else:
-        #return [[-999, -999, -999]]
 
 def expand_secondary_structure2(pdbID,segment,pdbin,pdbMvalues,SS_mapN,SS_mapC,nres,maxSeqLocs,
                                molSeq,sequence,cosolvents,ssPos,sscPos,posDict):
 
-    #print maxSeqLocs
 
     ratios = []
 
@@ -515,17 +429,12 @@ def expand_secondary_structure2(pdbID,segment,pdbin,pdbMvalues,SS_mapN,SS_mapC,n
         cterm = closestc(ssPos,segment[1])
         print ssPos, cterm
 
-    #print maxSeqLocs
+
     print 'Expand test'
     print segment
-    #print [posDict[nterm], posDict[cterm]]
+
     print sequence[maxSeqLocs[0]:maxSeqLocs[1]]
     print molSeq[nterm:cterm]
-
-    #sys.exit()
-        
-
-    #if posDict.has_key(maxSeqLocs[0]) and posDict.has_key(maxSeqLocs[1]):
 
     if not posDict.has_key(nterm):
         posDict[nterm] = 0
@@ -536,13 +445,8 @@ def expand_secondary_structure2(pdbID,segment,pdbin,pdbMvalues,SS_mapN,SS_mapC,n
 
     print ssPos
 
-    #sys.exit()
-
     iran = range(max(0,posDict[nterm]-3),posDict[nterm]+1)
     jran = range(posDict[cterm],min(len(ssPos),posDict[cterm]+4))
-
-    #print iran
-    #print jran
 
     leni = len(iran)
     lenj = len(jran)
@@ -558,29 +462,14 @@ def expand_secondary_structure2(pdbID,segment,pdbin,pdbMvalues,SS_mapN,SS_mapC,n
 
             segment = [ssPos[i],ssPos[j]]
 
-            #print segment
-
-            #sys.exit()
-
-            #seq = sequence[segment2[0]:segment2[1]]
-
-            #segment = getfSeqLoc(molSeq,seq)
-
-            #print segment2, segment
-
-            #continue
 
             segmentMvalues = get_segment_Mvals(pdbID,segment,pdbin)
-
-            #pdbMvalues = get_total_mvalues(pdbin,cosolvents,[segment[0],nres-segment[1]])
 
             r = calculate_ratio(cosolvents,segmentMvalues,pdbMvalues,[segment[0],min(nres,segment[1]+1)])
 
             ratios.append(r)
 
     print ratios
-
-    #sys.exit()
 
     maxi = -999
     maxj = -999
@@ -589,11 +478,6 @@ def expand_secondary_structure2(pdbID,segment,pdbin,pdbMvalues,SS_mapN,SS_mapC,n
     maxr = -999
 
     good_ranges = []
-            
-    #for k in xrange(len(ratios)):
-        #if ratios[k] > maxr:
-            #maxr = ratios[k]
-            #maxk = k
 
     for k in xrange(len(ratios)):
         if ratios[k] >= 0.7:
@@ -604,17 +488,6 @@ def expand_secondary_structure2(pdbID,segment,pdbin,pdbMvalues,SS_mapN,SS_mapC,n
     else:
         return[[-999,-999,-999]]
 
-    #print maxk, maxr, ssPos[iran[maxk/leni]], ssPos[jran[maxk%lenj]]
-    
-    #if maxr >= 0.8:
-     #   g maxr, ssPos[iran[maxk/lenj]], ssPos[jran[maxk%lenj]]
-        #return maxr, ssPos[0], ssPos[jran[maxk%lenj]]
-
-    #elif maxr >= 0.8:
-        #return maxr, -999, -999
-
-    #else:
-        #return [[-999, -999, -999]]
     
 def removeDoubleDashes(ss,seq):
 
@@ -631,29 +504,18 @@ def removeDoubleDashes(ss,seq):
 def tweak_boundaries(pdbID, segment, pdbin, nres, pdbMvalues,cosolvents,molSeq,
                      nstep,o,rorig,sorig):
 
-    #print 'Final segment: ',segment
-
-    #print molSeq[segment[0]:segment[1]+1]
-
-    #sys.exit()
-
     for i in xrange(nstep):
         if segment[0]+o-i < 0:
             break
         for j in xrange(nstep):
 
             seg = [max(segment[0]+o-i,0),min(segment[1]-o+j,nres)]
-            #print seg
 
             segmentMvalues = get_segment_Mvals(pdbID,seg,pdbin)
-
-            #pdbMvalues = get_total_mvalues(pdbin,cosolvents,[segment[0],nres-segment[1]])
 
             r = calculate_ratio(cosolvents,segmentMvalues,pdbMvalues,seg)
 
             print r, i, j, molSeq[seg[0]:seg[1]]
-
-            #print r, i, j
 
             if r >= MIN_RAT and r <= 10.0:
                  return r, seg
@@ -669,11 +531,6 @@ def tweak_boundaries(pdbID, segment, pdbin, nres, pdbMvalues,cosolvents,molSeq,
 def maximize_boundaries(pdbID, segment, pdbin, nres, pdbMvalues,cosolvents,molSeq,
                      nstep,o,rorig,sorig):
 
-    #print 'Final segment: ',segment
-
-    #print molSeq[segment[0]:segment[1]+1]
-
-    #sys.exit()
 
     maxRat = rorig
     maxSeg = sorig
@@ -684,17 +541,12 @@ def maximize_boundaries(pdbID, segment, pdbin, nres, pdbMvalues,cosolvents,molSe
         for j in xrange(nstep):
 
             seg = [max(segment[0]+o-i,0),min(segment[1]-o+j,nres)]
-            #print seg
 
             segmentMvalues = get_segment_Mvals(pdbID,seg,pdbin)
-
-            #pdbMvalues = get_total_mvalues(pdbin,cosolvents,[segment[0],nres-segment[1]])
 
             r = calculate_ratio(cosolvents,segmentMvalues,pdbMvalues,seg)
 
             print r, i, j, molSeq[seg[0]:seg[1]]
-
-            #print r, i, j
 
             if r > maxRat and r < 10.0:
                 maxRat = r
@@ -711,29 +563,18 @@ def maximize_boundaries(pdbID, segment, pdbin, nres, pdbMvalues,cosolvents,molSe
 def tweak_boundaries_plus(pdbID, segment, pdbin, nres, pdbMvalues,cosolvents,molSeq,
                           nstep,o,rorig,sorig):
 
-    #print 'Final segment: ',segment
-
-    #print molSeq[segment[0]:segment[1]+1]
-
-    #sys.exit()
-
     maxR = -999
     maxS = []
 
     for j in xrange(nstep):
 
         seg = [max(segment[0],0),min(segment[1]-o+j,nres)]
-        #print seg
 
         segmentMvalues = get_segment_Mvals(pdbID,seg,pdbin)
-
-        #pdbMvalues = get_total_mvalues(pdbin,cosolvents,[segment[0],nres-segment[1]])
 
         r = calculate_ratio(cosolvents,segmentMvalues,pdbMvalues,seg)
 
         print r, j, molSeq[seg[0]:seg[1]]
-
-        #print r, i, j
 
         if r >= maxR:
             maxR = r
@@ -754,33 +595,19 @@ def tweak_boundaries_plus(pdbID, segment, pdbin, nres, pdbMvalues,cosolvents,mol
 def tweak_boundaries_minus(pdbID, segment, pdbin, nres, pdbMvalues,cosolvents,molSeq,
                           nstep,o,rorig,sorig):
 
-    #print 'Final segment: ',segment
-
-    #print molSeq[segment[0]:segment[1]+1]
-
-    #sys.exit()
-
     maxR = -999
     maxS = []
 
     for j in xrange(nstep):
 
-       # print 'Here ',nstep
-        #sys.exit()
-
         seg = [max(segment[0]-o-j,0),min(segment[1],nres)]
-        #print seg
 
         segmentMvalues = get_segment_Mvals(pdbID,seg,pdbin)
-
-        #pdbMvalues = get_total_mvalues(pdbin,cosolvents,[segment[0],nres-segment[1]])
 
         r = calculate_ratio(cosolvents,segmentMvalues,pdbMvalues,seg)
 
         print 'Here ', r, j
         print r, j, molSeq[seg[0]:seg[1]]
-
-        #print r, i, j
 
         if r >= maxR:
             maxR = r
@@ -837,15 +664,11 @@ def make_rnumDict(molSeq,refSeq):
             rnumDict[i] = j
             j += 1
 
-            #print i, j
-
     k = rnumDict.keys()
     k.sort()
     curIdx = -999
     curIdxp1 = -999
     j = 0
-
-    #Index chain breaks to the next residue that shows up in electron density.
         
     for i in xrange(len(k)):
 
@@ -868,10 +691,6 @@ def make_rnumDict(molSeq,refSeq):
 
     add_terminal_indices(rnumDict,len(refSeq))
 
-    #for ky in rnumDict.keys():
-
-        #print ky, rnumDict[ky]
-
     return rnumDict
             
 
@@ -887,10 +706,6 @@ def pdb_cooperativity(pdbSequence,pdbSS,ID,chain,maxSeq):
     ss,sequence = removeDoubleDashes(pdbSS,pdbSequence)
 
     pos, cpos, posDict = ss2pos(ss.split(),ss)
-
-    #print pos
-
-    #sys.exit()
 
     sequence = removeSeqDashes(sequence)
     mSeq = removeSeqDashes(maxSeq)
@@ -930,15 +745,7 @@ def pdb_cooperativity(pdbSequence,pdbSS,ID,chain,maxSeq):
     if maxSSLocs[1] >= len(sequence)-5:
         maxSSLocs[1] = len(sequence)
 
-    #print maxSSLocs
-
     maxSq = sequence[maxSSLocs[0]:maxSSLocs[1]]
-    #print maxSq, maxSSLocs
-    #print ss
-    #print SS_mapN
-    #print SS_mapC
-    #print pos
-    #print goodSS
     
     maxSq = removeSeqDashes(maxSq)
 
@@ -951,43 +758,13 @@ def pdb_cooperativity(pdbSequence,pdbSS,ID,chain,maxSeq):
     del m
 
     mol_rnumDict = make_rnumDict(molSeq,sequence)
-    
-    #segment = getfSeqLoc(molSeq,maxSq)
 
     segment = [mol_rnumDict[maxSeqLocs[0]],mol_rnumDict[maxSeqLocs[1]]]
 
-    #print molSeq[segment[0]:segment[1]]
-    #print maxSq
-
-    #return
-
-    #print molSeq
-
     pdbin = open(ID+chain+'.pdb').read().splitlines()
 
-    #segmentMvalues = get_segment_Mvals(ID+chain,segment,pdbin)
-
-    #pdbMvalues = get_total_mvalues(pdbin,cosolvents,[segment[0],nres-segment[1]])
 
     pdbMvalues = get_total_mvalues(pdbin,cosolvents,[0,0])
-
-    #print pdbMvalues.mvalues[cosolvents[0]]
-
-    #r = calculate_ratio(cosolvents,segmentMvalues,pdbMvalues,segment)
-
-    #print segment, pos, r
-    #return
-
-    #sys.exit()
-
-    #r, seg = tweak_boundaries_plus(ID+chain,[segment[0],segment[1]],
-                                   #pdbin,nres,pdbMvalues,cosolvents,molSeq,50,0,0.0,segment)
-
-    #r2, seg2 = tweak_boundaries_minus(ID+chain,[segment[0],segment[1]],
-                                     #pdbin,nres,pdbMvalues,cosolvents,molSeq,50,0,r,seg)
-
-    #print r, seg
-    #print r2, seg2
 
     r, seg = tweak_boundaries(ID+chain,[segment[0],segment[1]],
                               pdbin,nres,pdbMvalues,cosolvents,molSeq,50,0,0.0,segment)
@@ -1027,7 +804,6 @@ def pdb_cooperativity(pdbSequence,pdbSS,ID,chain,maxSeq):
 
         good_ranges = []
 
-        #if not (posDict.has_key(maxSeqLocs[0]) or posDict.has_key(maxSeqLocs[1])):
         r,seg = tweak_boundaries(ID+chain,[segment[0],segment[1]],
                                  pdbin,nres,pdbMvalues,cosolvents,molSeq,10,0,
                                  r,seg)
@@ -1038,14 +814,6 @@ def pdb_cooperativity(pdbSequence,pdbSS,ID,chain,maxSeq):
                                                      SS_mapN,SS_mapC,nres,maxSeqLocs,molSeq,sequence,
                                                      cosolvents,
                                                      pos,cpos, posDict,mol_rnumDict)
-        
-        #if seg1 != -999 and seg2 != -999:
-            #print segment
-            #segment = [seg1,seg2]
-            #print segment
-            
-            #print good_ranges
-            #sys.exit()
 
         if (good_ranges and good_ranges[0][0] != -999):
 
@@ -1076,14 +844,7 @@ def pdb_cooperativity(pdbSequence,pdbSS,ID,chain,maxSeq):
     if not seg:
         seg = segment
 
-
-    #print r, molSeq[seg[0]:seg[1]+1]
-
-    #print seg
-
     return r, seg[0],seg[1], molSeq[seg[0]:seg[1]+1]
-
-    #printMvalInfo(cosolvents,segmentMvals,pdbMvalues)
     
 
     
@@ -1101,27 +862,16 @@ if __name__ == '__main__':
 
         info1 = f[i].split()
 
-        #print info
-
-        #sys.exit()
-
         ID = info1[0][:4]
         chn = info1[0][4]
         seq = info1[-1]
-        #ss = f[i][19:31]
-        #s_comp = float(f[i][32:40])
+
 
         info = DSSP_PDBs[ID+chn]
 
-        #print 'Test0, ',info.sq
-
         p1_cooperativity = pdb_cooperativity(info.sq,info.ss,ID,chn,seq)
 
-        #continue
-
         print info1[0], p1_cooperativity
-
-        #continue
 
         if p1_cooperativity[0] >= MIN_RAT:
 
@@ -1130,9 +880,5 @@ if __name__ == '__main__':
                                                     p1_cooperativity[2],
                                                     p1_cooperativity[3],
                                                     seq))
-
-        #if p1_cooperativity[0] >= 0.9:
-            #sys.exit()
-            #continue
         
                        
